@@ -1,41 +1,23 @@
+// Connexion à MySQL via un pool (réutilise les connexions au lieu d'en ouvrir une par requête)
 const mysql = require('mysql2/promise');
-// mysql2/promise = version moderne avec async/await
-// (vs l'ancienne API avec callbacks)
 
 const pool = mysql.createPool({
-  host:     process.env.DB_HOST,     // "mysql" (nom du service Docker)
-  port:     process.env.DB_PORT,     // 3306
-  database: process.env.DB_NAME,     // "fittrack"
-  user:     process.env.DB_USER,     // "fittrack_user"
-  password: process.env.DB_PASSWORD, // "fittrack_pass"
-
-  charset:         'utf8mb4',
-  // Crucial pour les accents, emojis, caractères spéciaux
-
-  timezone: '+00:00',
-  // UTC partout pour éviter les problèmes de fuseau horaire
-
+  host:     process.env.DB_HOST,     // nom du service Docker : "mysql"
+  port:     process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  charset:         'utf8mb4',        // support des accents et emojis
+  timezone:        '+00:00',         // tout en UTC
   waitForConnections: true,
-  // Si toutes les connexions sont occupées, attendre qu'une se libère
-
-  connectionLimit: 10,
-  // Maximum 10 connexions simultanées vers MySQL
-  // Un pool évite d'ouvrir/fermer une connexion pour chaque requête
-
-  queueLimit: 0,
-  // 0 = file d'attente illimitée
+  connectionLimit:    10,            // max 10 connexions simultanées
+  queueLimit:         0,
 });
 
+// Vérifie la connexion au démarrage
 pool.getConnection()
-  .then(conn => {
-    console.log('MySQL connected successfully');
-    conn.release(); // Libère la connexion de test
-  })
-  .catch(err => {
-    console.error('MySQL connection failed:', err.message);
-  });
+  .then(conn => { console.log('MySQL connected successfully'); conn.release(); })
+  .catch(err => { console.error('MySQL connection failed:', err.message); });
 
+// Utilisation dans les modèles : const [rows] = await pool.execute('SELECT ...')
 module.exports = pool;
-// Utilisation dans les models :
-// const [rows] = await pool.execute('SELECT * FROM User');
-

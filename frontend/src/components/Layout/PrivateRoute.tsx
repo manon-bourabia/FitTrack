@@ -1,3 +1,4 @@
+// Garde de route — redirige vers /login si l'utilisateur n'est pas connecté
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import LoadingSpinner from './LoadingSpinner'
@@ -5,15 +6,15 @@ import LoadingSpinner from './LoadingSpinner'
 export default function PrivateRoute() {
   const { user, loading } = useAuth()
 
-  // Pendant la vérification initiale du token au démarrage
+  // Vérification initiale du token en cours
   if (loading) return <LoadingSpinner />
 
-  // Race condition après login : setUser est async, navigate() peut s'exécuter
-  // avant que le state soit mis à jour. Si un token existe en localStorage,
-  // on attend au lieu de rediriger (le useEffect d'AuthContext va charger l'user).
+  // Token présent mais user pas encore chargé (race condition après login)
   if (!user && localStorage.getItem('token')) return <LoadingSpinner />
 
+  // Pas connecté → redirection vers /login
   if (!user) return <Navigate to="/login" replace />
 
+  // Connecté → affiche la page demandée (via Outlet = composant enfant de la route)
   return <Outlet />
 }

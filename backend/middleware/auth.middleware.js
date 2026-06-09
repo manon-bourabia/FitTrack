@@ -1,52 +1,25 @@
-// ============================================================
-// middleware/auth.middleware.js — Vérification du token JWT
-//
-// Un middleware Express est une fonction (req, res, next) placée
-// entre la réception de la requête et son traitement final.
-// Celui-ci vérifie que l'utilisateur est authentifié avant de
-// laisser passer la requête vers le contrôleur.
-// ============================================================
-
+// Middleware JWT — vérifie que l'utilisateur est connecté avant d'accéder aux routes protégées
+// Le client envoie le token dans le header : Authorization: Bearer <token>
 const jwt = require('jsonwebtoken');
 
-// ---- Fonctionnement du JWT (JSON Web Token) ----
-// Un JWT est une chaîne encodée en base64 composée de 3 parties :
-//   Header.Payload.Signature
-//
-// Le serveur génère un token lors du login et le signe avec JWT_SECRET.
-// Le client le stocke (localStorage) et l'envoie dans chaque requête :
-//   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-//
-// Pour vérifier, on re-signe le header+payload avec JWT_SECRET et on
-// compare : si ça correspond, le token est authentique et non modifié.
-
 const authMiddleware = (req, res, next) => {
-  // Lecture du header Authorization de la requête entrante
   const authHeader = req.headers.authorization;
 
-  // Vérification de la présence et du format "Bearer <token>"
+  // Pas de token ou mauvais format
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Access denied. No token provided.' });
-    // 401 = Non authentifié (il manque ou le token est absent/malformé)
   }
 
-  // On extrait uniquement le token (on retire le préfixe "Bearer ")
   const token = authHeader.split(' ')[1];
 
   try {
-    // jwt.verify() décode ET vérifie la signature avec la clé secrète.
-    // Si le token a été modifié ou signé avec une autre clé → exception.
-    // Si la date d'expiration est dépassée → exception TokenExpiredError.
+    // Vérifie la signature et la date d'expiration du token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // On attache l'identité décodée à req.user pour que les contrôleurs
-    // puissent savoir quel utilisateur fait la requête (req.user.id etc.)
+    // Injecte l'identité de l'utilisateur dans req.user (accessible dans les controllers)
     req.user = { id: decoded.id, email: decoded.email, username: decoded.username };
-
-    // next() passe la main au prochain middleware ou au contrôleur
     next();
   } catch (err) {
-    // Distinction entre token expiré et token invalide pour un meilleur message
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired. Please log in again.' });
     }

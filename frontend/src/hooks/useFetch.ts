@@ -1,52 +1,32 @@
-// ============================================================
-// hooks/useFetch.ts — Hook générique pour les appels API GET
-//
-// Ce hook centralise la logique répétitive de tout appel API :
-//   - état de chargement (loading)
-//   - données reçues (data)
-//   - gestion d'erreur (error)
-//   - possibilité de relancer la requête (refetch)
-//
-// Le <T> est un générique TypeScript : il permet de typer le résultat
-// à l'usage. Ex: useFetch<{ exercises: Exercise[] }>('/exercises')
-// ============================================================
-
+// Hook générique pour les appels API GET — gère le chargement, les données et les erreurs
+// Utilisation : const { data, loading, refetch } = useFetch<MonType>('/mon-endpoint')
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
 
-// Interface décrivant ce que retourne le hook
 interface UseFetchResult<T> {
-  data: T | null      // null avant la première réponse
-  loading: boolean    // true pendant la requête en cours
+  data: T | null
+  loading: boolean
   error: string | null
-  refetch: () => void // Fonction pour relancer la requête manuellement
+  refetch: () => void  // Permet de relancer la requête manuellement (après une modification)
 }
 
 export function useFetch<T>(url: string): UseFetchResult<T> {
-  const [data, setData] = useState<T | null>(null)
+  const [data, setData]       = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError]     = useState<string | null>(null)
 
-  // useCallback mémoïse la fonction fetchData pour éviter qu'elle soit
-  // recréée à chaque render. Sans ça, le useEffect ci-dessous se déclencherait
-  // en boucle infinie car fetchData serait une nouvelle référence à chaque fois.
+  // useCallback évite de recréer la fonction à chaque render (évite une boucle infinie dans useEffect)
   const fetchData = useCallback(() => {
     setLoading(true)
     setError(null)
-    api
-      .get<T>(url)
-      .then((res: { data: T }) => setData(res.data))
+    api.get<T>(url)
+      .then((res) => setData(res.data))
       .catch(() => setError('Impossible de charger les données'))
       .finally(() => setLoading(false))
-  }, [url]) // Se recrée uniquement si l'url change
+  }, [url])
 
-  // useEffect déclenche fetchData au montage du composant,
-  // et de nouveau si fetchData change (c'est-à-dire si url change)
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+  // Lance la requête au montage du composant, et si l'url change
+  useEffect(() => { fetchData() }, [fetchData])
 
-  // refetch expose fetchData : les composants peuvent rappeler manuellement
-  // la requête après une création/modification pour actualiser l'affichage
   return { data, loading, error, refetch: fetchData }
 }

@@ -1,33 +1,13 @@
-// ============================================================
-// routes/auth.routes.js — Définition des routes d'authentification
-//
-// Le routeur Express regroupe les routes d'un même domaine fonctionnel.
-// Il est monté dans server.js sous le préfixe /api/auth.
-// Son rôle : relier une URL + méthode HTTP à un contrôleur.
-// ============================================================
-
+// Routes d'authentification — montées sous /api/auth dans server.js
 const express = require('express');
+const router  = express.Router();
 
-// express.Router() crée un mini-routeur indépendant qu'on peut exporter
-// et brancher dans server.js avec app.use('/api/auth', authRoutes)
-const router = express.Router();
+const AuthController  = require('../controllers/auth.controller');
+const authMiddleware  = require('../middleware/auth.middleware');
 
-const AuthController = require('../controllers/auth.controller');
-const authMiddleware = require('../middleware/auth.middleware');
-
-// POST /api/auth/register — Création de compte (publique, pas de JWT requis)
-router.post('/register', AuthController.register);
-
-// POST /api/auth/login — Connexion (publique, pas de JWT requis)
-router.post('/login', AuthController.login);
-
-// GET /api/auth/me — Profil de l'utilisateur connecté (protégée par JWT)
-// authMiddleware est passé en 2e argument : il s'exécute AVANT AuthController.me
-// Si le token est absent/invalide, authMiddleware répond 401 et .me n'est jamais appelé
-router.get('/me', authMiddleware, AuthController.me);
-
-
-// PUT /api/auth/profile — Mise à jour du profil (protégée par JWT)
-router.put('/profile', authMiddleware, AuthController.updateProfile);
+router.post('/register', AuthController.register);                     // Créer un compte
+router.post('/login',    AuthController.login);                        // Se connecter
+router.get( '/me',       authMiddleware, AuthController.me);           // Profil connecté
+router.put( '/profile',  authMiddleware, AuthController.updateProfile); // Modifier le profil
 
 module.exports = router;
