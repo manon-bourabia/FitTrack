@@ -45,7 +45,7 @@ api.interceptors.response.use(
   (error) => {
     // 401 = token expiré ou invalide → on déconnecte l'utilisateur
     // Sans cet intercepteur, il faudrait gérer ce cas dans chaque composant
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && localStorage.getItem('token')) {
       localStorage.removeItem('token')       // Supprime le token périmé
       window.location.href = '/login'        // Redirige vers la page de connexion
     }

@@ -1,17 +1,11 @@
-// ============================================================
-// pages/Profile.tsx — Page profil utilisateur
-//
-// Affiche les informations du compte + un graphique d'activité mensuelle.
-// Réutilise le même endpoint que Dashboard (/stats/progression)
-// pour éviter un appel API supplémentaire.
-// ============================================================
-
+import { useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { User, Target, Scale, Calendar, Activity } from 'lucide-react'
+import { User, Target, Scale, Calendar, Activity, Pencil, X, Check } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useFetch } from '../hooks/useFetch'
 import { ProgressionStats } from '../types'
 import LoadingSpinner from '../components/Layout/LoadingSpinner'
+import toast from 'react-hot-toast'
 
 const GOAL_LABELS: Record<string, string> = {
   lose: 'Perte de poids',
@@ -19,7 +13,6 @@ const GOAL_LABELS: Record<string, string> = {
   gain: 'Prise de masse',
 }
 
-// Couleur Tailwind de l'objectif pour le mettre en valeur visuellement
 const GOAL_COLORS: Record<string, string> = {
   lose: 'text-amber-400',
   maintain: 'text-emerald-400',
@@ -33,7 +26,7 @@ const MONTH_LABELS: Record<string, string> = {
 }
 
 function formatMonth(m: string) {
-  const [, month] = m.split('-') // On ignore l'année (on prend juste le mois)
+  const [, month] = m.split('-')
   return MONTH_LABELS[month] ?? month
 }
 
@@ -52,14 +45,54 @@ const tooltipStyle = {
 }
 
 export default function Profile() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const { data, loading } = useFetch<ProgressionStats>('/stats/progression')
+
+  // État du formulaire d'édition
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({
+    username: user?.username ?? '',
+    email: user?.email ?? '',
+    weight: user?.weight ? String(user.weight) : '',
+    goal: user?.goal ?? 'maintain',
+  })
+
+  const handleEdit = () => {
+    setForm({
+      username: user?.username ?? '',
+      email: user?.email ?? '',
+      weight: user?.weight ? String(user.weight) : '',
+      goal: user?.goal ?? 'maintain',
+    })
+    setEditing(true)
+  }
+
+  const handleCancel = () => setEditing(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await updateUser({
+        username: form.username,
+        email: form.email,
+        weight: form.weight ? parseFloat(form.weight) : undefined,
+        goal: form.goal,
+      })
+      toast.success('Profil mis à jour !')
+      setEditing(false)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error ?? 'Erreur lors de la mise à jour'
+      toast.error(msg)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) return <LoadingSpinner />
 
   const stats = data?.stats
-
-  // [...stats.monthly].reverse() : copie + inversion pour ordre chronologique
   const chartData = stats
     ? [...stats.monthly].reverse().map((m) => ({
         name: formatMonth(m.month),
@@ -67,8 +100,6 @@ export default function Profile() {
       }))
     : []
 
-  // Initiales de l'avatar : 2 premières lettres du username en majuscule
-  // Ex: "jerome" → "JE" ; fallback "FT" si pas d'utilisateur
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'FT'
 
   return (
@@ -77,49 +108,121 @@ export default function Profile() {
 
       {/* Carte utilisateur */}
       <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-6">
-        <div className="flex items-center gap-5">
-          {/* Avatar avec initiales — pas d'image = pas de requête externe */}
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl font-bold text-white shrink-0">
-            {initials}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl font-bold text-white shrink-0">
+              {initials}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-100">{user?.username}</h2>
+              <p className="text-sm text-slate-400">{user?.email}</p>
+              {data?.user.member_since && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Membre depuis {formatDate(data.user.member_since)}
+                </p>
+              )}
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-100">{user?.username}</h2>
-            <p className="text-sm text-slate-400">{user?.email}</p>
-            {/* Rendu conditionnel : s'affiche uniquement si member_since est défini */}
-            {data?.user.member_since && (
-              <p className="text-xs text-slate-500 mt-1">
-                Membre depuis {formatDate(data.user.member_since)}
-              </p>
-            )}
-          </div>
+
+          {/* Bouton éditer / annuler */}
+          {!editing ? (
+            <button
+              onClick={handleEdit}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 transition-colors"
+            >
+              <Pencil size={14} />
+              Modifier
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancel}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-slate-700/50 transition-colors"
+              >
+                <X size={14} /> Annuler
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
+              >
+                <Check size={14} /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* 3 infos en grille : poids, objectif, nombre de séances */}
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-slate-700/50">
-          <InfoItem
-            icon={<Scale size={15} className="text-slate-500" />}
-            label="Poids"
-            value={user?.weight ? `${user.weight} kg` : '—'}
-          />
-          <InfoItem
-            icon={<Target size={15} className="text-slate-500" />}
-            label="Objectif"
-            // value peut être du JSX (React.ReactNode) pour mettre la couleur
-            value={
-              <span className={GOAL_COLORS[user?.goal ?? 'maintain']}>
-                {GOAL_LABELS[user?.goal ?? 'maintain']}
-              </span>
-            }
-          />
-          <InfoItem
-            icon={<Activity size={15} className="text-slate-500" />}
-            label="Séances"
-            value={stats?.summary.total_workouts ?? 0}
-          />
-        </div>
+        {/* Formulaire d'édition */}
+        {editing ? (
+          <div className="mt-6 pt-5 border-t border-slate-700/50 grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">Nom d'utilisateur</label>
+              <input
+                type="text"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">Poids (kg)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={form.weight}
+                onChange={(e) => setForm({ ...form, weight: e.target.value })}
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                placeholder="ex : 75.5"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">Objectif</label>
+              <select
+                value={form.goal}
+                onChange={(e) => setForm({ ...form, goal: e.target.value })}
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="lose">Perte de poids</option>
+                <option value="maintain">Maintien du poids</option>
+                <option value="gain">Prise de masse</option>
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-slate-700/50">
+            <InfoItem
+              icon={<Scale size={15} className="text-slate-500" />}
+              label="Poids"
+              value={user?.weight ? `${user.weight} kg` : '—'}
+            />
+            <InfoItem
+              icon={<Target size={15} className="text-slate-500" />}
+              label="Objectif"
+              value={
+                <span className={GOAL_COLORS[user?.goal ?? 'maintain']}>
+                  {GOAL_LABELS[user?.goal ?? 'maintain']}
+                </span>
+              }
+            />
+            <InfoItem
+              icon={<Activity size={15} className="text-slate-500" />}
+              label="Séances"
+              value={stats?.summary.total_workouts ?? 0}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Deux cards côte à côte : minutes totales et exercices maîtrisés */}
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-1">
@@ -139,7 +242,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Graphique d'activité mensuelle */}
+      {/* Graphique */}
       <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-5">
         <h3 className="text-sm font-semibold text-slate-200 mb-4">Activité mensuelle</h3>
         {chartData.length > 0 ? (
@@ -157,7 +260,6 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Répartition par catégorie — section optionnelle */}
       {stats?.byCategory && stats.byCategory.length > 0 && (
         <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-5">
           <h3 className="text-sm font-semibold text-slate-200 mb-4">Répartition par type</h3>
@@ -168,15 +270,13 @@ export default function Profile() {
               const colors: Record<string, string> = {
                 Musculation: '#6366F1', Cardio: '#F59E0B', Flexibilité: '#10B981',
               }
-              const color = colors[cat.category] ?? '#94A3B8'
               return (
                 <div key={cat.category} className="flex items-center gap-3">
                   <div className="w-24 shrink-0">
                     <span className="text-xs text-slate-400">{cat.category}</span>
                   </div>
                   <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-                    {/* Largeur dynamique via style inline — impossible avec Tailwind seul */}
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: colors[cat.category] ?? '#94A3B8' }} />
                   </div>
                   <span className="text-xs text-slate-500 w-8 text-right">{pct}%</span>
                 </div>
@@ -189,10 +289,6 @@ export default function Profile() {
   )
 }
 
-// ============================================================
-// InfoItem — Composant interne pour afficher une info avec icône
-// value est typé React.ReactNode pour pouvoir recevoir du JSX (span coloré)
-// ============================================================
 function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
     <div>

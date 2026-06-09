@@ -26,4 +26,8 @@ router.post('/login', AuthController.login);
 // Si le token est absent/invalide, authMiddleware répond 401 et .me n'est jamais appelé
 router.get('/me', authMiddleware, AuthController.me);
 
+
+// PUT /api/auth/profile — Mise à jour du profil (protégée par JWT)
+router.put('/profile', authMiddleware, AuthController.updateProfile);
+
 module.exports = router;

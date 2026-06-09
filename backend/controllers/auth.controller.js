@@ -130,6 +130,30 @@ const AuthController = {
       res.status(500).json({ error: 'Failed to fetch profile.' });
     }
   },
+
+  // ---- PUT /api/auth/profile ----
+  // Met à jour le profil de l'utilisateur connecté (poids, objectif, username).
+  async updateProfile(req, res) {
+    try {
+      const { username, email, weight, goal } = req.body;
+
+      const VALID_GOALS = ['lose', 'maintain', 'gain'];
+      if (goal && !VALID_GOALS.includes(goal)) {
+        return res.status(400).json({ error: 'Invalid goal value.' });
+      }
+
+      const updated = await UserModel.update(req.user.id, { username, email, weight, goal });
+      if (!updated) return res.status(404).json({ error: 'User not found.' });
+
+      res.json({ message: 'Profile updated.', user: updated });
+    } catch (err) {
+      console.error('UpdateProfile error:', err);
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ error: 'Username or email already in use.' });
+      }
+      res.status(500).json({ error: 'Failed to update profile.' });
+    }
+  },
 };
 
 module.exports = AuthController;
