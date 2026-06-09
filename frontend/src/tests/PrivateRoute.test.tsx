@@ -15,7 +15,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 // MemoryRouter + Route + Routes : nécessaires pour simuler les routes imbriquées
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import PrivateRoute from '../components/PrivateRoute'
+import PrivateRoute from '../components/Layout/PrivateRoute'
 import { AuthContext, AuthContextType } from '../context/AuthContext'
 import { User } from '../types'
 

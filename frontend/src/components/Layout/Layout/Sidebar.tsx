@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Dumbbell, Calendar, User, LogOut } from 'lucide-react'
-import { useAuth } from '../../hooks/useAuth'
+import { useAuth } from '../../../hooks/useAuth'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },

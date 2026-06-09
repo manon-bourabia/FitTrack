@@ -20,7 +20,7 @@ import {
 import toast from 'react-hot-toast'
 import api from '../services/api'
 import { Workout, Exercise, WorkoutExercise } from '../types'
-import LoadingSpinner from '../components/LoadingSpinner'
+import LoadingSpinner from '../components/Layout/LoadingSpinner'
 
 const CAT_COLORS: Record<string, string> = {
   Musculation: 'bg-indigo-500/15 text-indigo-300',

@@ -17,7 +17,7 @@ import { Activity, Clock, Dumbbell, TrendingUp, ChevronRight } from 'lucide-reac
 import { useAuth } from '../hooks/useAuth'
 import { useFetch } from '../hooks/useFetch'
 import { ProgressionStats } from '../types'
-import LoadingSpinner from '../components/LoadingSpinner'
+import LoadingSpinner from '../components/Layout/LoadingSpinner'
 
 // Mapping valeur BDD → label lisible
 const GOAL_LABELS: Record<string, string> = {

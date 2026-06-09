@@ -11,7 +11,7 @@ import { User, Target, Scale, Calendar, Activity } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useFetch } from '../hooks/useFetch'
 import { ProgressionStats } from '../types'
-import LoadingSpinner from '../components/LoadingSpinner'
+import LoadingSpinner from '../components/Layout/LoadingSpinner'
 
 const GOAL_LABELS: Record<string, string> = {
   lose: 'Perte de poids',
