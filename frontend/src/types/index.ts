@@ -13,6 +13,7 @@ export interface Exercise {
   category: 'Musculation' | 'Cardio' | 'Flexibilité'
   muscle_group: string | null
   description: string | null
+  gif_url: string | null
   created_at: string
 }
 

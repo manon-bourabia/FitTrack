@@ -73,7 +73,7 @@ export default function Profile() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      await updateUser({
+      await updateUser?.({
         username: form.username,
         email: form.email,
         weight: form.weight ? parseFloat(form.weight) : undefined,
@@ -188,7 +188,7 @@ export default function Profile() {
               <label className="text-xs text-slate-500">Objectif</label>
               <select
                 value={form.goal}
-                onChange={(e) => setForm({ ...form, goal: e.target.value })}
+                onChange={(e) => setForm({ ...form, goal: e.target.value as 'lose' | 'maintain' | 'gain' })}
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
               >
                 <option value="lose">Perte de poids</option>
