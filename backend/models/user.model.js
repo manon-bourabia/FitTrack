@@ -1,55 +1,67 @@
-// Modèle User — toutes les requêtes SQL liées aux utilisateurs
 const pool   = require('../config/database');
 const bcrypt = require('bcrypt');
 
+
+const SALT_ROUNDS= 10;
+
 const UserModel = {
 
-  // Cherche un utilisateur par email (retourne null si introuvable)
-  async findByEmail(email) {
-    const [rows] = await pool.execute('SELECT * FROM User WHERE email = ?', [email]);
-    return rows[0] || null;
-  },
-
-  // Cherche un utilisateur par nom d'utilisateur
-  async findByUsername(username) {
-    const [rows] = await pool.execute('SELECT * FROM User WHERE username = ?', [username]);
-    return rows[0] || null;
-  },
-
-  // Retourne un utilisateur par id, sans le mot de passe
-  async findById(id) {
-    const [rows] = await pool.execute(
-      'SELECT id, username, email, weight, goal, created_at, updated_at FROM User WHERE id = ?', [id]
-    );
-    return rows[0] || null;
-  },
-
-  // Crée un utilisateur (hash le mot de passe avant l'insertion) — retourne l'id créé
   async create({ username, email, password, weight, goal }) {
-    const hash = await bcrypt.hash(password, 10);
-    const [result] = await pool.execute(
+  
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const [result] = await db.execute(
       'INSERT INTO User (username, email, password, weight, goal) VALUES (?, ?, ?, ?, ?)',
-      [username, email, hash, weight || null, goal || 'maintain']
+      [username, email, hashedPassword, weight || null, goal || 'maintain']
     );
+
     return result.insertId;
   },
 
-  // Met à jour les champs fournis (seuls les champs définis sont modifiés)
-  async update(id, { username, email, weight, goal }) {
-    const fields = [], values = [];
+  async findByEmail(email) {
+    const [rows] = await db.execute(
+      'SELECT * FROM User WHERE email = ?',
+      [email]
+    );
+    return rows[0] || null;
+  },
+
+  async findById(id) {
+    const [rows] = await db.execute(
+      'SELECT id, username, email, weight, goal, created_at FROM User WHERE id = ?',
+      [id]
+    );
+    return rows[0] || null;
+  },
+
+  async findByUsername(username) {
+    const [rows] = await db.execute(
+      'SELECT id FROM User WHERE username = ?',
+      [username]
+    );
+    return rows[0] || null;
+  },
+
+  async update(id, { username, weight, goal }) {
+
+    const fields = [];
+    const values = [];
+
     if (username !== undefined) { fields.push('username = ?'); values.push(username); }
-    if (email    !== undefined) { fields.push('email = ?');    values.push(email); }
-    if (weight   !== undefined) { fields.push('weight = ?');   values.push(weight); }
-    if (goal     !== undefined) { fields.push('goal = ?');     values.push(goal); }
-    if (!fields.length) return this.findById(id);
+    if (weight !== undefined) { fields.push('weight = ?'); values.push(weight); }
+    if (goal !== undefined) { fields.push('goal = ?'); values.push(goal); }
+
+    if (fields.length === 0) return null;
+
     values.push(id);
-    await pool.execute(`UPDATE User SET ${fields.join(', ')} WHERE id = ?`, values);
+
+    await db.execute(`UPDATE User SET ${fields.join(', ')} WHERE id = ?`, values);
+
     return this.findById(id);
   },
 
-  // Compare un mot de passe en clair avec le hash stocké en base
-  async verifyPassword(plain, hash) {
-    return bcrypt.compare(plain, hash);
+  async verifyPassword(plainPassword, hashedPassword) {
+    return bcrypt.compare(plainPassword, hashedPassword);
   },
 };
 
