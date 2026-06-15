@@ -8,7 +8,7 @@ const ExerciseModel = {
     const values = [];
 
     if (category) {
-      query += ' AND category = ?';
+      query += ' AND category = ?';//query + 'AND category = ?' = query(nouvelle)
       values.push(category);
     }
 
@@ -17,7 +17,7 @@ const ExerciseModel = {
       values.push(`%${search}%`, `%${search}%`);
     }
 
-    query += ' ORDER BY category, name';
+    query += ' ORDER BY category, name'; 
     const [rows] = await db.execute(query, values);
     return rows;
   },
