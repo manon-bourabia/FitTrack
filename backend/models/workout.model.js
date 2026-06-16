@@ -19,7 +19,7 @@ const WorkoutModel = {
   async findById(id, userId) {
     // user_id dans le WHERE : un utilisateur ne peut accéder qu'à ses propres séances
     const [workouts] = await db.execute(
-      'SELECT * FROM Workout WHERE id = ? AND user_id = ?',
+      `SELECT * FROM Workout WHERE id = ? AND user_id = ?`,
       [id, userId]
     );
     if (!workouts[0]) return null;
@@ -38,7 +38,7 @@ const WorkoutModel = {
 
   async create({ user_id, title, date, duration, notes }) {
     const [result] = await db.execute(
-      'INSERT INTO Workout (user_id, title, date, duration, notes) VALUES (?, ?, ?, ?, ?)',
+      `INSERT INTO Workout (user_id, title, date, duration, notes) VALUES (?, ?, ?, ?, ?)`,
       [user_id, title, date, duration || null, notes || null]
     );
     return result.insertId;
@@ -46,7 +46,7 @@ const WorkoutModel = {
 
   async addExercise(workoutId, { exercise_id, sets, reps, weight_used, duration }) {
     const [result] = await db.execute(
-      'INSERT INTO WorkoutExercise (workout_id, exercise_id, sets, reps, weight_used, duration) VALUES (?, ?, ?, ?, ?, ?)',
+      `INSERT INTO WorkoutExercise (workout_id, exercise_id, sets, reps, weight_used, duration) VALUES (?, ?, ?, ?, ?, ?)`,
       [workoutId, exercise_id, sets || null, reps || null, weight_used || null, duration || null]
     );
     return result.insertId;
@@ -55,14 +55,14 @@ const WorkoutModel = {
   async updateExercise(weId, workoutId, { sets, reps, weight_used, duration }) {
     // workout_id dans le WHERE : on ne peut modifier que les exercices de ses propres séances
     await db.execute(
-      'UPDATE WorkoutExercise SET sets=?, reps=?, weight_used=?, duration=? WHERE id=? AND workout_id=?',
+      `UPDATE WorkoutExercise SET sets=?, reps=?, weight_used=?, duration=? WHERE id=? AND workout_id=?`,
       [sets || null, reps || null, weight_used || null, duration || null, weId, workoutId]
     );
   },
 
   async removeExercise(weId, workoutId) {
     const [result] = await db.execute(
-      'DELETE FROM WorkoutExercise WHERE id=? AND workout_id=?',
+      `DELETE FROM WorkoutExercise WHERE id=? AND workout_id=?`,
       [weId, workoutId]
     );
     return result.affectedRows > 0;
@@ -70,7 +70,7 @@ const WorkoutModel = {
 
   // Stratégie DELETE + INSERT : plus simple que de calculer les différences (utilisé sur PUT)
   async replaceExercises(workoutId, exercises) {
-    await db.execute('DELETE FROM WorkoutExercise WHERE workout_id = ?', [workoutId]);
+    await db.execute(`DELETE FROM WorkoutExercise WHERE workout_id = ?`, [workoutId]);
     for (const ex of exercises) {
       if (!ex.exercise_id) continue;
       await this.addExercise(workoutId, ex);
@@ -95,7 +95,7 @@ const WorkoutModel = {
 
   async delete(id, userId) {
     const [result] = await db.execute(
-      'DELETE FROM Workout WHERE id = ? AND user_id = ?',
+      `DELETE FROM Workout WHERE id = ? AND user_id = ?`,
       [id, userId]
     );
     // Les WorkoutExercise liées sont supprimées automatiquement via ON DELETE CASCADE
