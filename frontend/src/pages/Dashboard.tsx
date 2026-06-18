@@ -7,6 +7,7 @@
 // et composant interne (StatCard).
 // ============================================================
 
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 // Recharts : librairie de graphiques React (composants déclaratifs)
 import {
@@ -58,6 +59,7 @@ const tooltipStyle = {
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const [view, setView] = useState<'monthly' | 'weekly'>('monthly')
 
   // useFetch<ProgressionStats> : appel GET /api/stats/progression
   // Le générique <ProgressionStats> type la réponse pour TypeScript
@@ -68,16 +70,25 @@ export default function Dashboard() {
 
   const stats = data?.stats // ?. = opérateur optionnel (null-safe)
 
-  // Préparation des données pour Recharts :
-  // [...stats.monthly].reverse() remet les mois dans l'ordre chronologique
-  // (l'API les retourne du plus récent au plus ancien)
-  const chartData = stats
+  // Données mensuelles : ordre chronologique (l'API retourne du plus récent au plus ancien)
+  const monthlyChartData = stats
     ? [...stats.monthly].reverse().map((m) => ({
         name: formatMonth(m.month),
         Séances: m.workout_count,
         Minutes: m.total_minutes,
       }))
     : []
+
+  // Données hebdomadaires : on formate "Lun 9 juin" à partir de week_start
+  const weeklyChartData = stats?.weekly
+    ? [...stats.weekly].reverse().map((w) => {
+        const [y, mo, d] = w.week_start.slice(0, 10).split('-').map(Number)
+        const label = new Date(y, mo - 1, d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+        return { name: label, Séances: w.workout_count, Minutes: w.total_minutes }
+      })
+    : []
+
+  const chartData = view === 'weekly' ? weeklyChartData : monthlyChartData
 
   // Total pour calculer le pourcentage de chaque catégorie dans les barres
   const totalCategory = stats?.byCategory.reduce((acc, c) => acc + c.exercise_count, 0) || 1
@@ -128,7 +139,25 @@ export default function Dashboard() {
       <div className="grid lg:grid-cols-3 gap-4">
         {/* BarChart Recharts — rendu conditionnel si données disponibles */}
         <div className="lg:col-span-2 bg-[#1E293B] border border-slate-700/50 rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-4">Séances par mois</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-200">
+              Séances par {view === 'weekly' ? 'semaine' : 'mois'}
+            </h2>
+            <div className="flex rounded-lg overflow-hidden border border-slate-700 text-xs">
+              <button
+                onClick={() => setView('weekly')}
+                className={`px-3 py-1.5 transition-colors ${view === 'weekly' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700/50'}`}
+              >
+                Semaine
+              </button>
+              <button
+                onClick={() => setView('monthly')}
+                className={`px-3 py-1.5 transition-colors ${view === 'monthly' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700/50'}`}
+              >
+                Mois
+              </button>
+            </div>
+          </div>
           {chartData.length > 0 ? (
             // ResponsiveContainer adapte le graphique à la largeur du conteneur
             <ResponsiveContainer width="100%" height={200}>

@@ -130,6 +130,23 @@ const WorkoutModel = {
       [userId]
     );
 
+    // YEARWEEK regroupe par semaine (ex: "202523") sur les 8 dernières semaines
+    // MODE 1 : semaine commence le lundi, numérotation ISO
+    const [weeklyStats] = await db.execute(
+      `SELECT
+        YEARWEEK(date, 1)                          as week_key,
+        DATE_FORMAT(MIN(date), '%Y-%m-%d')         as week_start,
+        COUNT(*)                                   as workout_count,
+        COALESCE(SUM(duration), 0)                 as total_minutes
+       FROM Workout
+       WHERE user_id = ?
+         AND date >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)
+       GROUP BY YEARWEEK(date, 1)
+       ORDER BY week_key DESC
+       LIMIT 8`,
+      [userId]
+    );
+
     const [categoryStats] = await db.execute(
       `SELECT
         e.category,
@@ -155,6 +172,7 @@ const WorkoutModel = {
     return {
       summary: totalStats[0],
       monthly: monthlyStats,
+      weekly: weeklyStats,
       byCategory: categoryStats,
       recent: recentWorkouts,
     };

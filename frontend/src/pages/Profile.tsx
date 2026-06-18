@@ -155,10 +155,10 @@ export default function Profile() {
 
   const weightMin = weightChartData.length
     ? Math.floor(Math.min(...weightChartData.map((d) => d.Poids)) - 2)
-    : undefined
+    : 'auto'
   const weightMax = weightChartData.length
     ? Math.ceil(Math.max(...weightChartData.map((d) => d.Poids)) + 2)
-    : undefined
+    : 'auto'
 
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'FT'
 
@@ -422,7 +422,8 @@ export default function Profile() {
               <YAxis domain={[weightMin, weightMax]} tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} unit=" kg" width={52} />
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={(val: number) => [`${val} kg`, 'Poids']}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(val: any) => [`${val} kg`, 'Poids'] as any}
                 labelFormatter={(label) => {
                   const entry = weightChartData.find((d) => d.date === label)
                   return entry?.label ?? label
