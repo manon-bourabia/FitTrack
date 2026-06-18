@@ -1,6 +1,7 @@
 // Contrôleur auth — gère l'inscription, la connexion et le profil utilisateur
-const jwt       = require('jsonwebtoken');
-const UserModel = require('../models/user.model');
+const jwt         = require('jsonwebtoken');
+const UserModel   = require('../models/user.model');
+const WeightModel = require('../models/weight.model');
 
 // Génère un token JWT contenant l'id, l'email et le username (valable 7 jours)
 const generateToken = (user) => jwt.sign(
@@ -80,8 +81,16 @@ const AuthController = {
       if (goal && !['lose', 'maintain', 'gain'].includes(goal))
         return res.status(400).json({ error: 'Invalid goal value.' });
 
+      // Récupère le poids actuel pour ne créer une WeightEntry que si le poids a changé
+      const currentUser = await UserModel.findById(req.user.id);
       const updated = await UserModel.update(req.user.id, { username, email, weight, goal });
       if (!updated) return res.status(404).json({ error: 'User not found.' });
+
+      // Si le poids a été modifié, on l'enregistre automatiquement dans l'historique
+      if (weight !== undefined && parseFloat(weight) !== parseFloat(currentUser.weight)) {
+        const today = new Date().toISOString().slice(0, 10);
+        await WeightModel.create(req.user.id, { weight: parseFloat(weight), date: today, note: 'Mis à jour depuis le profil' });
+      }
 
       res.json({ message: 'Profile updated.', user: updated });
     } catch (err) {
