@@ -43,6 +43,18 @@ export interface Workout {
   exercises?: WorkoutExercise[]
 }
 
+export interface WeightEntry {
+  id: number
+  weight: number
+  date: string
+  note: string | null
+  created_at: string
+}
+
+export interface WeightHistory {
+  entries: WeightEntry[]
+}
+
 export interface ProgressionStats {
   user: {
     username: string

@@ -8,6 +8,7 @@ const authRoutes     = require('./routes/auth.routes');
 const exerciseRoutes = require('./routes/exercise.routes');
 const workoutRoutes  = require('./routes/workout.routes');
 const statsRoutes    = require('./routes/stats.routes');
+const weightRoutes   = require('./routes/weight.routes');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -34,6 +35,7 @@ app.use('/api/auth',      authRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/workouts',  workoutRoutes);
 app.use('/api/stats',     statsRoutes);
+app.use('/api/weight',    weightRoutes);
 
 // Aucune route trouvée → 404
 app.use((req, res) => {

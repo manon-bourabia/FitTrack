@@ -65,6 +65,21 @@ CREATE TABLE IF NOT EXISTS WorkoutExercise (
 );
 
 -- =============================================
+-- TABLE: WeightEntry
+-- =============================================
+CREATE TABLE IF NOT EXISTS WeightEntry (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT            NOT NULL,
+    weight     DECIMAL(5,2)   NOT NULL COMMENT 'Poids en kg',
+    date       DATE           NOT NULL,
+    note       VARCHAR(255)   DEFAULT NULL,
+    created_at TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_weight_entry_user_date ON WeightEntry(user_id, date DESC);
+
+-- =============================================
 -- TEST DATA: Exercises
 -- =============================================
 INSERT INTO Exercise (name, category, muscle_group, description) VALUES

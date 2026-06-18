@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { User, Target, Scale, Calendar, Activity, Pencil, X, Check } from 'lucide-react'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts'
+import { User, Target, Scale, Calendar, Activity, Pencil, X, Check, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useFetch } from '../hooks/useFetch'
-import { ProgressionStats } from '../types'
+import { ProgressionStats, WeightHistory } from '../types'
 import LoadingSpinner from '../components/Layout/LoadingSpinner'
 import toast from 'react-hot-toast'
+import api from '../services/api'
 
 const GOAL_LABELS: Record<string, string> = {
   lose: 'Perte de poids',
@@ -47,8 +48,9 @@ const tooltipStyle = {
 export default function Profile() {
   const { user, updateUser } = useAuth()
   const { data, loading } = useFetch<ProgressionStats>('/stats/progression')
+  const { data: weightData, loading: weightLoading, refetch: refetchWeight } = useFetch<WeightHistory>('/weight')
 
-  // État du formulaire d'édition
+  // État du formulaire d'édition profil
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -57,6 +59,15 @@ export default function Profile() {
     weight: user?.weight ? String(user.weight) : '',
     goal: user?.goal ?? 'maintain',
   })
+
+  // État du formulaire d'ajout de pesée
+  const [showWeightForm, setShowWeightForm] = useState(false)
+  const [weightForm, setWeightForm] = useState({
+    weight: '',
+    date: new Date().toISOString().slice(0, 10),
+    note: '',
+  })
+  const [savingWeight, setSavingWeight] = useState(false)
 
   const handleEdit = () => {
     setForm({
@@ -90,6 +101,39 @@ export default function Profile() {
     }
   }
 
+  const handleAddWeight = async () => {
+    if (!weightForm.weight || !weightForm.date) {
+      toast.error('Poids et date requis')
+      return
+    }
+    setSavingWeight(true)
+    try {
+      await api.post('/weight', {
+        weight: parseFloat(weightForm.weight),
+        date: weightForm.date,
+        note: weightForm.note || undefined,
+      })
+      toast.success('Pesée enregistrée !')
+      setWeightForm({ weight: '', date: new Date().toISOString().slice(0, 10), note: '' })
+      setShowWeightForm(false)
+      refetchWeight()
+    } catch {
+      toast.error('Erreur lors de l\'enregistrement')
+    } finally {
+      setSavingWeight(false)
+    }
+  }
+
+  const handleDeleteWeight = async (id: number) => {
+    try {
+      await api.delete(`/weight/${id}`)
+      toast.success('Pesée supprimée')
+      refetchWeight()
+    } catch {
+      toast.error('Erreur lors de la suppression')
+    }
+  }
+
   if (loading) return <LoadingSpinner />
 
   const stats = data?.stats
@@ -99,6 +143,22 @@ export default function Profile() {
         Séances: m.workout_count,
       }))
     : []
+
+  // Données pour le graphique de poids : ordre chronologique, 30 dernières entrées
+  const weightChartData = weightData?.entries
+    ? [...weightData.entries].reverse().slice(-30).map((e) => ({
+        date: e.date.slice(0, 10),
+        Poids: Number(e.weight),
+        label: formatDate(e.date),
+      }))
+    : []
+
+  const weightMin = weightChartData.length
+    ? Math.floor(Math.min(...weightChartData.map((d) => d.Poids)) - 2)
+    : undefined
+  const weightMax = weightChartData.length
+    ? Math.ceil(Math.max(...weightChartData.map((d) => d.Poids)) + 2)
+    : undefined
 
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'FT'
 
@@ -285,6 +345,125 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {/* ── Suivi du poids ───────────────────────────────────────── */}
+      <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-slate-200">Évolution du poids</h3>
+          <button
+            onClick={() => setShowWeightForm((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+          >
+            <Plus size={12} />
+            Ajouter une pesée
+          </button>
+        </div>
+
+        {/* Formulaire d'ajout */}
+        {showWeightForm && (
+          <div className="mb-5 p-4 bg-slate-800/60 rounded-xl border border-slate-700/50 grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">Poids (kg)</label>
+              <input
+                type="number"
+                step="0.1"
+                placeholder="ex : 74.5"
+                value={weightForm.weight}
+                onChange={(e) => setWeightForm({ ...weightForm, weight: e.target.value })}
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">Date</label>
+              <input
+                type="date"
+                value={weightForm.date}
+                onChange={(e) => setWeightForm({ ...weightForm, date: e.target.value })}
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">Note (optionnel)</label>
+              <input
+                type="text"
+                placeholder="ex : après sport"
+                value={weightForm.note}
+                onChange={(e) => setWeightForm({ ...weightForm, note: e.target.value })}
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div className="col-span-3 flex justify-end gap-2 pt-1">
+              <button
+                onClick={() => setShowWeightForm(false)}
+                className="px-3 py-1.5 text-xs rounded-lg text-slate-400 hover:bg-slate-700 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleAddWeight}
+                disabled={savingWeight}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 transition-colors"
+              >
+                <Check size={12} />
+                {savingWeight ? 'Enregistrement…' : 'Enregistrer'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Graphique linéaire */}
+        {weightLoading ? (
+          <p className="text-slate-500 text-sm text-center py-8">Chargement…</p>
+        ) : weightChartData.length > 1 ? (
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={weightChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+              <YAxis domain={[weightMin, weightMax]} tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} unit=" kg" width={52} />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                formatter={(val: number) => [`${val} kg`, 'Poids']}
+                labelFormatter={(label) => {
+                  const entry = weightChartData.find((d) => d.date === label)
+                  return entry?.label ?? label
+                }}
+              />
+              {user?.goal === 'lose' && user.weight && (
+                <ReferenceLine y={user.weight} stroke="#F59E0B" strokeDasharray="4 4" label={{ value: 'actuel', position: 'right', fontSize: 10, fill: '#F59E0B' }} />
+              )}
+              <Line type="monotone" dataKey="Poids" stroke="#6366F1" strokeWidth={2} dot={{ r: 3, fill: '#6366F1' }} activeDot={{ r: 5 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-slate-500 text-sm text-center py-8">
+            {weightData?.entries.length === 1
+              ? 'Ajoute au moins 2 pesées pour voir l\'évolution.'
+              : 'Aucune pesée enregistrée. Commence maintenant !'}
+          </p>
+        )}
+
+        {/* Liste des 5 dernières pesées */}
+        {weightData?.entries && weightData.entries.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-2">
+            <p className="text-xs text-slate-500 mb-2">Dernières pesées</p>
+            {weightData.entries.slice(0, 5).map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-slate-200">{Number(entry.weight).toFixed(1)} kg</span>
+                  <span className="text-slate-500 text-xs">{formatDate(entry.date)}</span>
+                  {entry.note && <span className="text-slate-600 text-xs italic">{entry.note}</span>}
+                </div>
+                <button
+                  onClick={() => handleDeleteWeight(entry.id)}
+                  className="text-slate-600 hover:text-red-400 transition-colors p-1"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
