@@ -74,6 +74,11 @@ export interface ProgressionStats {
       workout_count: number
       total_minutes: number
     }>
+    daily: Array<{
+      day: string
+      workout_count: number
+      total_minutes: number
+    }>
     weekly: Array<{
       week_key: string
       week_start: string

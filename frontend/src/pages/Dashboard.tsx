@@ -79,19 +79,22 @@ export default function Dashboard() {
       }))
     : []
 
-  // Données hebdomadaires : label court pour l'axe X + tooltip complet "du X au Y"
-  const weeklyChartData = stats?.weekly
-    ? [...stats.weekly].reverse().map((w) => {
-        const [y, mo, d] = w.week_start.slice(0, 10).split('-').map(Number)
-        const start = new Date(y, mo - 1, d)
-        const end   = new Date(y, mo - 1, d + 6)
-        const shortLabel   = `${start.getDate()}-${end.getDate()} ${start.toLocaleDateString('fr-FR', { month: 'short' })}`
-        const tooltipLabel = `Semaine du ${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} au ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`
-        return { name: shortLabel, tooltip: tooltipLabel, Séances: w.workout_count, Minutes: w.total_minutes }
-      })
-    : []
+  // Données journalières : 7 derniers jours, jours sans séance = 0
+  const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+  const dailyChartData = (() => {
+    const result = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().slice(0, 10)
+      const label = DAY_LABELS[d.getDay()]
+      const match = stats?.daily?.find((x) => x.day === key)
+      result.push({ name: label, Séances: match?.workout_count ?? 0, Minutes: match?.total_minutes ?? 0 })
+    }
+    return result
+  })()
 
-  const chartData = view === 'weekly' ? weeklyChartData : monthlyChartData
+  const chartData = view === 'weekly' ? dailyChartData : monthlyChartData
 
   // Total pour calculer le pourcentage de chaque catégorie dans les barres
   const totalCategory = stats?.byCategory.reduce((acc, c) => acc + c.exercise_count, 0) || 1
@@ -171,13 +174,6 @@ export default function Dashboard() {
                 <Tooltip
                   contentStyle={tooltipStyle}
                   cursor={{ fill: 'rgba(99,102,241,0.08)' }}
-                  labelFormatter={(label) => {
-                    if (view === 'weekly') {
-                      const entry = weeklyChartData.find((d) => d.name === label)
-                      return entry?.tooltip ?? label
-                    }
-                    return label
-                  }}
                 />
                 {/* dataKey="Séances" doit correspondre à la clé dans chartData */}
                 <Bar dataKey="Séances" fill="#6366F1" radius={[4, 4, 0, 0]} />
