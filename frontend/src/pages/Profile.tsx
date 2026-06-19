@@ -163,7 +163,7 @@ export default function Profile() {
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'FT'
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-4 md:space-y-6 w-full md:max-w-2xl">
       <h1 className="text-2xl font-bold text-slate-100">Mon profil</h1>
 
       {/* Carte utilisateur */}
@@ -214,7 +214,7 @@ export default function Profile() {
 
         {/* Formulaire d'édition */}
         {editing ? (
-          <div className="mt-6 pt-5 border-t border-slate-700/50 grid grid-cols-2 gap-4">
+          <div className="mt-6 pt-5 border-t border-slate-700/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs text-slate-500">Nom d'utilisateur</label>
               <input
@@ -258,7 +258,7 @@ export default function Profile() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-5 border-t border-slate-700/50">
+          <div className="grid grid-cols-3 gap-2 mt-6 pt-5 border-t border-slate-700/50">
             <InfoItem
               icon={<Scale size={15} className="text-slate-500" />}
               label="Poids"
@@ -283,7 +283,7 @@ export default function Profile() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <div className="bg-[#1E293B] border border-slate-700/50 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-1">
             <Calendar size={14} className="text-indigo-400" />
@@ -361,7 +361,7 @@ export default function Profile() {
 
         {/* Formulaire d'ajout */}
         {showWeightForm && (
-          <div className="mb-5 p-4 bg-slate-800/60 rounded-xl border border-slate-700/50 grid grid-cols-3 gap-3">
+          <div className="mb-5 p-4 bg-slate-800/60 rounded-xl border border-slate-700/50 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="text-xs text-slate-500">Poids (kg)</label>
               <input
@@ -392,7 +392,7 @@ export default function Profile() {
                 className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
               />
             </div>
-            <div className="col-span-3 flex justify-end gap-2 pt-1">
+            <div className="col-span-1 sm:col-span-3 flex justify-end gap-2 pt-1">
               <button
                 onClick={() => setShowWeightForm(false)}
                 className="px-3 py-1.5 text-xs rounded-lg text-slate-400 hover:bg-slate-700 transition-colors"

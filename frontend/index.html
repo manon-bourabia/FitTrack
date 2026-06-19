@@ -2,10 +2,31 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Viewport mobile : empêche le zoom au tap sur iOS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
     <title>FitTrack — Suivi d'entraînement</title>
+    <meta name="description" content="Suis tes entraînements et ta progression avec FitTrack" />
+
+    <!-- Couleur de la barre de statut sur Android Chrome -->
+    <meta name="theme-color" content="#0F172A" />
+
+    <!-- Mode plein écran sur iOS (comme une app native) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FitTrack" />
+
+    <!-- Icône sur l'écran d'accueil iOS -->
+    <link rel="apple-touch-icon" href="/pwa-icon-192.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
     <style>
       body { background: #0F172A; margin: 0; }
+      /* Évite le rebond de scroll sur iOS en mode standalone */
+      html { overflow: hidden; height: 100%; }
+      body { overflow: auto; height: 100%; -webkit-overflow-scrolling: touch; }
     </style>
   </head>
   <body>

@@ -79,12 +79,15 @@ export default function Dashboard() {
       }))
     : []
 
-  // Données hebdomadaires : on formate "Lun 9 juin" à partir de week_start
+  // Données hebdomadaires : label court pour l'axe X + tooltip complet "du X au Y"
   const weeklyChartData = stats?.weekly
     ? [...stats.weekly].reverse().map((w) => {
         const [y, mo, d] = w.week_start.slice(0, 10).split('-').map(Number)
-        const label = new Date(y, mo - 1, d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-        return { name: label, Séances: w.workout_count, Minutes: w.total_minutes }
+        const start = new Date(y, mo - 1, d)
+        const end   = new Date(y, mo - 1, d + 6)
+        const shortLabel   = `${start.getDate()}-${end.getDate()} ${start.toLocaleDateString('fr-FR', { month: 'short' })}`
+        const tooltipLabel = `Semaine du ${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} au ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`
+        return { name: shortLabel, tooltip: tooltipLabel, Séances: w.workout_count, Minutes: w.total_minutes }
       })
     : []
 
@@ -107,7 +110,7 @@ export default function Dashboard() {
       </div>
 
       {/* 4 cartes de statistiques — composant StatCard défini plus bas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <StatCard
           icon={<Activity size={18} className="text-indigo-400" />}
           label="Séances totales"
@@ -136,7 +139,7 @@ export default function Dashboard() {
       </div>
 
       {/* Graphique mensuel + répartition par catégorie */}
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* BarChart Recharts — rendu conditionnel si données disponibles */}
         <div className="lg:col-span-2 bg-[#1E293B] border border-slate-700/50 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
@@ -165,7 +168,17 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(99,102,241,0.08)' }} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  cursor={{ fill: 'rgba(99,102,241,0.08)' }}
+                  labelFormatter={(label) => {
+                    if (view === 'weekly') {
+                      const entry = weeklyChartData.find((d) => d.name === label)
+                      return entry?.tooltip ?? label
+                    }
+                    return label
+                  }}
+                />
                 {/* dataKey="Séances" doit correspondre à la clé dans chartData */}
                 <Bar dataKey="Séances" fill="#6366F1" radius={[4, 4, 0, 0]} />
               </BarChart>

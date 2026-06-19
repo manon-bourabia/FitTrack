@@ -23,7 +23,7 @@ export default function Sidebar() {
     : 'FT'
 
   return (
-    <aside className="w-60 bg-[#0D1117] border-r border-slate-800 flex flex-col h-screen sticky top-0 shrink-0">
+    <aside className="hidden md:flex w-60 bg-[#0D1117] border-r border-slate-800 flex-col h-screen sticky top-0 shrink-0">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-800">
         <div className="flex items-center gap-2.5">
