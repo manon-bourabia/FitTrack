@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // ============================================================
 // tests/Register.test.tsx — Tests du composant Register
 //

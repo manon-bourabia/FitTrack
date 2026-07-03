@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // ============================================================
 // tests/Dashboard.test.tsx — Tests du composant Dashboard
 //

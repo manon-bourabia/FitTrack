@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // ============================================================
 // tests/Sidebar.test.tsx — Tests du composant Sidebar
 //
@@ -9,7 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import Sidebar from '../components/Layout/Layout/Sidebar'
+import Sidebar from '../components/Layout/Sidebar'
 import { AuthContext, AuthContextType } from '../context/AuthContext'
 import { User } from '../types'
 

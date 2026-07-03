@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // ============================================================
 // tests/PrivateRoute.test.tsx — Tests du composant PrivateRoute
 //

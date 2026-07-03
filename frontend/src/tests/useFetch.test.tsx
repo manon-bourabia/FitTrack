@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // ============================================================
 // tests/useFetch.test.tsx — Tests du hook useFetch
 //

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // ============================================================
 // tests/useAuth.test.tsx — Tests du hook useAuth
 //
