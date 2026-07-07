@@ -65,6 +65,8 @@ const mockStats: ProgressionStats = {
       { month: '2024-01', workout_count: 4, total_minutes: 240 },
       { month: '2024-02', workout_count: 8, total_minutes: 480 },
     ],
+    daily: [],
+    weekly: [],
     byCategory: [
       { category: 'Musculation', exercise_count: 8, total_reps: 320 },
     ],

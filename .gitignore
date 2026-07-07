@@ -28,3 +28,12 @@ backend/coverage/
 
 # Docker (volumes locaux)
 mysql_data/
+
+# Artéfacts générés par tsc (compilation TypeScript de vite.config.ts)
+# Ces fichiers sont auto-générés et ne doivent pas être versionnés
+vite.config.js
+vite.config.d.ts
+
+# Cache de build incrémental TypeScript (généré par tsc --incremental)
+# Recréé automatiquement à chaque build, inutile dans le dépôt
+*.tsbuildinfo
