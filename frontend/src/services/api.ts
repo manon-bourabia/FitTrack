@@ -1,8 +1,9 @@
 // Instance Axios centralisée — toutes les requêtes API passent par ici
 import axios from 'axios'
 
-// baseURL '/api' + proxy Vite → redirige vers http://backend:5000
-const api = axios.create({ baseURL: '/api' })
+// En dev : VITE_API_URL absent → '/api' → proxy Vite → backend Docker
+// En prod : VITE_API_URL = 'https://fittrack-xxxx.onrender.com/api' → requêtes directes vers Render
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 
 // Avant chaque requête : ajoute le token JWT dans le header si l'utilisateur est connecté
 api.interceptors.request.use((config) => {
