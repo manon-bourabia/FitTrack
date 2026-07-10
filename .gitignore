@@ -38,3 +38,7 @@ vite.config.d.ts
 # Recréé automatiquement à chaque build, inutile dans le dépôt
 *.tsbuildinfo
 database/init-clevercloud.sql
+CLAUDE.md
+database/init-clevercloud.sql
+database/update-gif-urls.sql
+backend/test-connection.js
