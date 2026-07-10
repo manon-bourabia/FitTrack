@@ -37,3 +37,4 @@ vite.config.d.ts
 # Cache de build incrémental TypeScript (généré par tsc --incremental)
 # Recréé automatiquement à chaque build, inutile dans le dépôt
 *.tsbuildinfo
+database/init-clevercloud.sql
